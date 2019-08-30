@@ -4,7 +4,7 @@ from threading import *
 from time import sleep
 import json
 
-serve_ip = '169.254.49.77'
+serve_ip = '192.168.42.29'
 serve_port = 8090
 database_pwd = '111111'
 

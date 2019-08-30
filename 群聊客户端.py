@@ -1,12 +1,10 @@
 from socket import *
 from tkinter import *
 import json
-import time.sleep
+from time import sleep
 
-serve_ip = '169.254.49.77'
+serve_ip = '192.168.42.29'
 serve_port = 8090
-
-myid = ''
 
 
 def getip():
@@ -30,7 +28,7 @@ def main_root():  # 主界面
     mainloop()
 
 
-def login_root():  # 创建群聊界面
+def login_root():  #
     login_root1 = Tk()
     login_root1.geometry('500x500')
     uid_label = Label(login_root1, text='账号:')
@@ -200,6 +198,9 @@ def chat_main_root():
     button_add_friendadd.pack()
     button_del_friendadd = Button(chat_main_root2, text='注销账户', command=lambda: del_user_inf())
     button_del_friendadd.pack()
+
+
+
     mainloop()
 
 
@@ -284,7 +285,7 @@ def send_data(data_send):
     elif data['command'] == '5':
         if data['uid']:
             print('账号已注销!!')
-            time.sleep(1)
+            sleep(1)
             exit_process()
 
 
