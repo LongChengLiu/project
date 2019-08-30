@@ -2,6 +2,11 @@ from socket import *
 from tkinter import *
 import json
 
+serve_ip = '169.254.49.77'
+serve_port = 8090
+
+myid = ''
+
 
 def getip():
     myname = getfqdn(gethostname())
@@ -45,7 +50,9 @@ def login_root():  # 创建群聊界面
 
 
 def login(uid_entry, pwd_entry):
+    global myid
     uip = getip()
+    myid = uid_entry.get()
     send_data({'uip': uip, 'command': '1', 'uid': uid_entry.get(), 'pwd': pwd_entry.get()})
 
 
@@ -78,7 +85,7 @@ def user_register_root():
 
 def register(uname_entry, pwd_entry, pwd_entry2, QQ_entry2):
     if pwd_entry.get() == pwd_entry2.get():
-        send_data({'command': '2', 'qqid': QQ_entry2.get(), 'pwd': pwd_entry.get(), 'uname': '龙成'})
+        send_data({'command': '2', 'qqid': QQ_entry2.get(), 'pwd': pwd_entry.get(), 'uname': uname_entry.get()})
     else:
         print('两次密码不一致!!!')
 
@@ -108,7 +115,8 @@ def forget_pwd_root2(uid):
     pwd_label3.pack()
     pwd_entry3 = Entry(forget_pwd_root2)
     pwd_entry3.pack()
-    button_enter = Button(forget_pwd_root2, text='确认', command=lambda: forget_pwd2(pwd_entry2.get(), pwd_entry3.get(),uid))
+    button_enter = Button(forget_pwd_root2, text='确认',
+                          command=lambda: forget_pwd2(pwd_entry2.get(), pwd_entry3.get(), uid))
     button_enter.pack()
     button_cancel = Button(forget_pwd_root2, text='取消', command=exit_process)
     button_cancel.pack()
@@ -121,16 +129,38 @@ def forget_pwd(qqid):
     send_data(data)
 
 
-def forget_pwd2(pwd, pwd2,uid):
+def forget_pwd2(pwd, pwd2, uid):
     if pwd == pwd2:
-        data = {'pwd': pwd, 'command': '3.1','uid':uid}
+        data = {'pwd': pwd, 'command': '3.1', 'uid': uid}
         send_data(data)
     else:
         print('两次密码不一致!!')
 
 
-def add_friend():
-    pass
+def add_friend_root1():
+    add_friend_root2 = Tk()
+    add_friend_root2.geometry('600x800')
+    uid_label = Label(add_friend_root2, text='id或昵称:')
+    uid_label.pack()
+    uid_entry = Entry(add_friend_root2)
+    uid_entry.pack()
+    button_enter = Button(add_friend_root2, text='确认',
+                          command=lambda: add_friend_show(uid_entry.get()))
+    button_enter.pack()
+    button_cancel = Button(add_friend_root2, text='取消', command=exit_process)
+    button_cancel.pack()
+    mainloop()
+
+
+def add_friend_show(fid):
+    data = {'command': '4', 'fid': fid}
+    send_data(data)
+
+
+def add_friend(fid):
+    uid = myid
+    data = {'command': '4.1', 'fid': fid, 'uid':uid}
+    send_data(data)
 
 
 def change_friendadd():
@@ -144,7 +174,7 @@ def del_friendadd():
 def chat_main_root():
     chat_main_root2 = Tk()
     chat_main_root2.geometry('600x800+100+100')
-    button_add_friendadd = Button(chat_main_root2, text='添加好友', command=lambda: add_friend())
+    button_add_friendadd = Button(chat_main_root2, text='添加好友', command=lambda: add_friend_root1())
     button_add_friendadd.pack()
     button_del_friendadd = Button(chat_main_root2, text='删除好友', command=lambda: del_friendadd())
     button_del_friendadd.pack()
@@ -161,9 +191,20 @@ def show_uid(uid):
     button_show_uid.pack()
 
 
+def add_friend_show_root(show_list):
+    add_friend_show_root2 = Tk()
+    add_friend_show_root2.geometry('900x900+100+100')
+    a = 0
+    for i in show_list:
+        a += 1
+        lable_show_add_friend = Label(add_friend_show_root2, text='{}'.format(i))
+        lable_show_add_friend.place(x=20, y=20 * a)
+    mainloop()
+
+
 def send_data(data_send):
     client_socket = socket(AF_INET, SOCK_STREAM)
-    client_socket.connect(('192.168.42.214', 8090))
+    client_socket.connect((serve_ip, serve_port))
     data = json.dumps(data_send)
     data_en = data.encode('utf8')
     client_socket.send(data_en)
@@ -202,6 +243,14 @@ def send_data(data_send):
             show_uid(uid)
         else:
             print('修改失败!!')
+    elif data['command'] == '4':
+        if data['f1'] or data['f2']:
+            list_show = list(data['f2'])
+            for i in data['f1']:
+                list_show.append(i)
+        else:
+            list_show = ''
+        add_friend_show_root(list_show)
 
 
 def data_processing(recv_data):

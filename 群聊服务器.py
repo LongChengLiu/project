@@ -4,10 +4,15 @@ from threading import *
 from time import sleep
 import json
 
+serve_ip = '169.254.49.77'
+serve_port = 8090
+
+database_pwd = '111111'
+
 
 def server_create():  # 接收数据
     tcp_server_socket = socket(AF_INET, SOCK_STREAM)
-    tcp_server_socket.bind(('192.168.42.214', 8090))
+    tcp_server_socket.bind((serve_ip, serve_port))
     tcp_server_socket.listen(1000)
     while 1:
         c_con, cip = tcp_server_socket.accept()
@@ -17,12 +22,11 @@ def server_create():  # 接收数据
 
 def server_send_to(cip, c_con, send_data):
     tcp_server_socket = socket(AF_INET, SOCK_DGRAM)
-    tcp_server_socket.bind(('192.168.42.214', 8090))
+    tcp_server_socket.bind((serve_ip, serve_port))
 
     data = json.dumps(send_data)
 
     data_en = data.encode('utf8')
-
 
     # data_json = '123'.encode('utf8')
     c_con.sendto(data_en, cip)
@@ -30,7 +34,7 @@ def server_send_to(cip, c_con, send_data):
 
 
 def login(uid):  # 登录
-    con = connect(host='localhost', port=3306, user='root', passwd='llc1993', db='pythonclass')
+    con = connect(host='localhost', port=3306, user='root', passwd=database_pwd, db='pythonclass')
     cursor = con.cursor()
 
     try:
@@ -47,7 +51,7 @@ def login(uid):  # 登录
 
 def change_user_state(uid, command, uip):  # 用户状态
 
-    con = connect(host='localhost', port=3306, user='root', passwd='llc1993', db='pythonclass')
+    con = connect(host='localhost', port=3306, user='root', passwd=database_pwd, db='pythonclass')
     cursor = con.cursor()
     cursor.execute("UPDATE chatuserid SET state = '{}' WHERE uid = '{}'".format(command, uid))
     cursor.execute("UPDATE userinf SET uip = '{}' WHERE uid = '{}'".format(uip, uid))
@@ -57,7 +61,7 @@ def change_user_state(uid, command, uip):  # 用户状态
 
 
 def register(password, qqid, uname):  # 添加用户信息
-    con = connect(host='localhost', port=3306, user='root', passwd='llc1993', db='pythonclass')
+    con = connect(host='localhost', port=3306, user='root', passwd=database_pwd, db='pythonclass')
     cursor = con.cursor()
     try:
         cursor.execute("insert into chatuserid(Null_) values(null)")
@@ -68,7 +72,7 @@ def register(password, qqid, uname):  # 添加用户信息
         cursor.execute("create table  {}friends(fid int)".format(uid))
         cursor.execute(
             "insert into userinf(uid, pwd, qqid, uname) values('{}','{}','{}','{}')".format(uid, password, qqid,
-                                                                                          uname))
+                                                                                            uname))
         con.commit()
         cursor.close()
         con.close()
@@ -78,7 +82,7 @@ def register(password, qqid, uname):  # 添加用户信息
 
 
 def fotget_pwd1(qqid):  # 添加用户信息
-    con = connect(host='localhost', port=3306, user='root', passwd='llc1993', db='pythonclass')
+    con = connect(host='localhost', port=3306, user='root', passwd=database_pwd, db='pythonclass')
     cursor = con.cursor()
     try:
         cursor.execute("select uid from userinf where qqid = '{}'".format(qqid))
@@ -94,13 +98,13 @@ def fotget_pwd1(qqid):  # 添加用户信息
     return uid
 
 
-def fotget_pwd2(pwd,uid):  # 添加用户信息
+def fotget_pwd2(pwd, uid):  # 添加用户信息
     print(type(uid))
     print(pwd)
-    con = connect(host='localhost', port=3306, user='root', passwd='llc1993', db='pythonclass')
+    con = connect(host='localhost', port=3306, user='root', passwd=database_pwd, db='pythonclass')
     cursor = con.cursor()
     try:
-        cursor.execute("UPDATE userinf SET pwd = '{}' WHERE uid = '{}'".format(pwd,uid))
+        cursor.execute("UPDATE userinf SET pwd = '{}' WHERE uid = '{}'".format(pwd, uid))
         con.commit()
         cursor.close()
         con.close()
@@ -108,6 +112,36 @@ def fotget_pwd2(pwd,uid):  # 添加用户信息
         print(e)
         uid = False
     return uid
+
+
+def add_friend_show(uid):
+    con = connect(host='localhost', port=3306, user='root', passwd=database_pwd, db='pythonclass')
+    cursor = con.cursor()
+    try:
+        cursor.execute("select uid,uname from userinf where uid = '{}'".format(uid))
+        row = cursor.fetchall()
+        list_search_uid = row
+        print(list_search_uid)
+        con.commit()
+        cursor.close()
+        con.close()
+    except Exception as e:
+        print(e)
+        list_search_uid = False
+    con = connect(host='localhost', port=3306, user='root', passwd=database_pwd, db='pythonclass')
+    cursor = con.cursor()
+    try:
+        cursor.execute("select uid,uname from userinf where uname like '%{}%'".format(uid))
+        row = cursor.fetchall()
+        list_search_name = row
+        print(list_search_name)
+        con.commit()
+        cursor.close()
+        con.close()
+    except Exception as e:
+        print(e)
+        list_search_name = False
+    return list_search_name, list_search_uid
 
 
 def server_dispose(data, cip, c_con):
@@ -141,9 +175,17 @@ def server_dispose(data, cip, c_con):
         pwd = data['pwd']
         uid = data['uid']
         print(uid)
-        uid = fotget_pwd2(pwd,uid)
-        data = {'command':'3.1','pwd':pwd,'uid':uid}
+        uid = fotget_pwd2(pwd, uid)
+        data = {'command': '3.1', 'pwd': pwd, 'uid': uid}
         server_send_to(cip, c_con, data)
+    elif data['command'] == '4':
+        fid = data['fid']
+        user_list1, user_list2 = add_friend_show(fid)
+        data = {'command': '4', 'f1': user_list1, 'f2': user_list2}
+        server_send_to(cip, c_con, data)
+    elif data['command'] == '4.1':
+        fid = data['command']
+
 
 def data_recv(c_con, cip):  # 接受数据处理
     data = c_con.recv(1024)
@@ -171,8 +213,8 @@ server_create()
 
 # create_user('12345678', '979746262', 'longcheng')
 
-def add_friend(uid, fid, fname):  # 用户添加好友
-    con = connect(host='localhost', port=3306, user='root', passwd='llc1993', db='pythonclass')
+def add_friend(uid, fid, fname):  # 用户添加好友 好友id 好友备注
+    con = connect(host='localhost', port=3306, user='root', passwd=database_pwd, db='pythonclass')
     cursor = con.cursor()
     cursor.execute("create table if not exists {}friends(fid varchar(10),f_name varchar(10))".format((uid)))
     cursor.execute("insert into {}friends(fid, f_name) values('{}','{}')".format((uid), fid, fname))
@@ -182,7 +224,7 @@ def add_friend(uid, fid, fname):  # 用户添加好友
 
 
 def del_user(uid, fid, fname):  # 用户添加好友
-    con = connect(host='localhost', port=3306, user='root', passwd='llc1993', db='pythonclass')
+    con = connect(host='localhost', port=3306, user='root', passwd=database_pwd, db='pythonclass')
     cursor = con.cursor()
     cursor.execute("drop table if exists {}friends".format((uid)))
     cursor.execute("Delete  From userinf Where uid = '{}'".format(uid))
@@ -192,7 +234,7 @@ def del_user(uid, fid, fname):  # 用户添加好友
 
 
 def del_friend(uid, fid):  # 删除好友
-    con = connect(host='localhost', port=3306, user='root', passwd='llc1993', db='pythonclass')
+    con = connect(host='localhost', port=3306, user='root', passwd=database_pwd, db='pythonclass')
     cursor = con.cursor()
     cursor.execute("Delete  From {}friends Where fid = '{}'".format(uid, fid))
     cursor.fetchall()
@@ -200,6 +242,8 @@ def del_friend(uid, fid):  # 删除好友
     cursor.close()
     con.close()
 
+
+add_friend_show('long')
 # add_friend('8', '7', '123')
 # if __name__ == '__main__':
 #     main()
