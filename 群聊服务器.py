@@ -6,7 +6,6 @@ import json
 
 serve_ip = '169.254.49.77'
 serve_port = 8090
-
 database_pwd = '111111'
 
 
@@ -69,7 +68,7 @@ def register(password, qqid, uname):  # 添加用户信息
         row = cursor.fetchall()
         uid = row[-1][0]
 
-        cursor.execute("create table  {}friends(fid int)".format(uid))
+        cursor.execute("create table  {}friends(fid int, fname varchar(10) not null)".format(uid))
         cursor.execute(
             "insert into userinf(uid, pwd, qqid, uname) values('{}','{}','{}','{}')".format(uid, password, qqid,
                                                                                             uname))
@@ -144,6 +143,19 @@ def add_friend_show(uid):
     return list_search_name, list_search_uid
 
 
+def add_friend(uid, fid, fname):  # 用户添加好友 好友id 好友备注
+    try:
+        con = connect(host='localhost', port=3306, user='root', passwd=database_pwd, db='pythonclass')
+        cursor = con.cursor()
+        cursor.execute("insert into {}friends(fid, fname) values('{}','{}')".format((uid), fid, fname))
+        con.commit()
+        cursor.close()
+        con.close()
+    except:
+        fid = False
+    return fid
+
+
 def server_dispose(data, cip, c_con):
     data = json.loads(data.decode('utf8'))
     # data_dict = dict(data.decode('utf8'))
@@ -184,8 +196,17 @@ def server_dispose(data, cip, c_con):
         data = {'command': '4', 'f1': user_list1, 'f2': user_list2}
         server_send_to(cip, c_con, data)
     elif data['command'] == '4.1':
-        fid = data['command']
-
+        fid = data['fid']
+        uid = data['uid']
+        fname = data['fname']
+        fid = add_friend(uid, fid, fname)
+        data = {'command':'4.1','fid':fid}
+        server_send_to(cip, c_con, data)
+    elif data['command'] == '5':
+        uid = data['uid']
+        uid = del_user(uid)
+        data = {'command':'5','uid':uid}
+        server_send_to(cip, c_con, data)
 
 def data_recv(c_con, cip):  # 接受数据处理
     data = c_con.recv(1024)
@@ -213,24 +234,20 @@ server_create()
 
 # create_user('12345678', '979746262', 'longcheng')
 
-def add_friend(uid, fid, fname):  # 用户添加好友 好友id 好友备注
-    con = connect(host='localhost', port=3306, user='root', passwd=database_pwd, db='pythonclass')
-    cursor = con.cursor()
-    cursor.execute("create table if not exists {}friends(fid varchar(10),f_name varchar(10))".format((uid)))
-    cursor.execute("insert into {}friends(fid, f_name) values('{}','{}')".format((uid), fid, fname))
-    con.commit()
-    cursor.close()
-    con.close()
 
+def del_user(uid):  # 用户添加好友
+    try:
+        con = connect(host='localhost', port=3306, user='root', passwd=database_pwd, db='pythonclass')
+        cursor = con.cursor()
+        cursor.execute("drop table if exists {}friends".format((uid)))
+        cursor.execute("Delete  From userinf Where uid = '{}'".format(uid))
+        con.commit()
+        cursor.close()
+        con.close()
+    except:
+        uid = False
+    return uid
 
-def del_user(uid, fid, fname):  # 用户添加好友
-    con = connect(host='localhost', port=3306, user='root', passwd=database_pwd, db='pythonclass')
-    cursor = con.cursor()
-    cursor.execute("drop table if exists {}friends".format((uid)))
-    cursor.execute("Delete  From userinf Where uid = '{}'".format(uid))
-    con.commit()
-    cursor.close()
-    con.close()
 
 
 def del_friend(uid, fid):  # 删除好友

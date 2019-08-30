@@ -1,6 +1,7 @@
 from socket import *
 from tkinter import *
 import json
+import time.sleep
 
 serve_ip = '169.254.49.77'
 serve_port = 8090
@@ -157,9 +158,24 @@ def add_friend_show(fid):
     send_data(data)
 
 
-def add_friend(fid):
+def add_friend(event):
+    print(event.widget)
+    fid = eval(event.widget['text'])[0]
+    print(fid)
+
+    add_friend_fname_root = Tk()
+    add_friend_fname_root.geometry('100x100+100+100')
+    entry_fname = Entry(add_friend_fname_root)
+    entry_fname.pack()
+    button_fname = Button(add_friend_fname_root, text='确定', command=lambda: add_friend_send_data(fid, entry_fname))
+    button_fname.pack()
+    mainloop()
+
+
+def add_friend_send_data(fid, entry_fname):
+    fname = entry_fname.get()
     uid = myid
-    data = {'command': '4.1', 'fid': fid, 'uid':uid}
+    data = {'command': '4.1', 'fid': fid, 'uid': uid, 'fname': fname}
     send_data(data)
 
 
@@ -171,15 +187,19 @@ def del_friendadd():
     pass
 
 
+def del_user_inf():
+    uid = myid
+    data = {'command': '5', 'uid': uid}
+    send_data(data)
+
+
 def chat_main_root():
     chat_main_root2 = Tk()
     chat_main_root2.geometry('600x800+100+100')
     button_add_friendadd = Button(chat_main_root2, text='添加好友', command=lambda: add_friend_root1())
     button_add_friendadd.pack()
-    button_del_friendadd = Button(chat_main_root2, text='删除好友', command=lambda: del_friendadd())
+    button_del_friendadd = Button(chat_main_root2, text='注销账户', command=lambda: del_user_inf())
     button_del_friendadd.pack()
-    button_change_friendadd = Button(chat_main_root2, text='修改备注', command=lambda: change_friendadd())
-    button_change_friendadd.pack()
     mainloop()
 
 
@@ -196,8 +216,13 @@ def add_friend_show_root(show_list):
     add_friend_show_root2.geometry('900x900+100+100')
     a = 0
     for i in show_list:
+        print(i)
+        print(type(i))
+        if i[0] == str(myid):
+            continue
         a += 1
         lable_show_add_friend = Label(add_friend_show_root2, text='{}'.format(i))
+        lable_show_add_friend.bind('<ButtonRelease-1>', add_friend)
         lable_show_add_friend.place(x=20, y=20 * a)
     mainloop()
 
@@ -251,6 +276,16 @@ def send_data(data_send):
         else:
             list_show = ''
         add_friend_show_root(list_show)
+    elif data['command'] == '4.1':
+        if data['fid']:
+            print('添加成功!!')
+        else:
+            print('添加失败!!')
+    elif data['command'] == '5':
+        if data['uid']:
+            print('账号已注销!!')
+            time.sleep(1)
+            exit_process()
 
 
 def data_processing(recv_data):
