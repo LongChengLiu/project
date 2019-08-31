@@ -1,5 +1,3 @@
-#123456
-
 from socket import *
 from pymysql import *
 from threading import *
