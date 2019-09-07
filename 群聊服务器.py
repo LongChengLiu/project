@@ -1,4 +1,4 @@
-#123456
+# 123456
 
 from socket import *
 from pymysql import *
@@ -8,7 +8,7 @@ import json
 
 serve_ip = '192.168.42.29'
 serve_port = 8090
-database_pwd = '111111'
+database_pwd = 'llc1993'
 
 
 def server_create():  # 接收数据
@@ -50,11 +50,12 @@ def login(uid):  # 登录
     return pwd
 
 
-def change_user_state(uid, command, uip):  # 用户状态
-
+def change_user_state(uid, command, uip, c_con):  # 用户状态
+    print(c_con)
     con = connect(host='localhost', port=3306, user='root', passwd=database_pwd, db='pythonclass')
     cursor = con.cursor()
     cursor.execute("UPDATE chatuserid SET state = '{}' WHERE uid = '{}'".format(command, uid))
+    cursor.execute("""UPDATE chatuserid SET con = "{}" WHERE uid = '{}'""".format(c_con, uid))
     cursor.execute("UPDATE userinf SET uip = '{}' WHERE uid = '{}'".format(uip, uid))
     con.commit()
     cursor.close()
@@ -168,7 +169,8 @@ def server_dispose(data, cip, c_con):
         else:
             if pwd == data['pwd']:
                 pwd = True
-                change_user_state(data['uid'], '1', data['uip'])
+                change_user_state(data['uid'], '1', data['uip'], c_con)
+
             else:
                 pwd = False
         send_data = {'command': '1', 'pwd': pwd}
@@ -202,13 +204,14 @@ def server_dispose(data, cip, c_con):
         uid = data['uid']
         fname = data['fname']
         fid = add_friend(uid, fid, fname)
-        data = {'command':'4.1','fid':fid}
+        data = {'command': '4.1', 'fid': fid}
         server_send_to(cip, c_con, data)
     elif data['command'] == '5':
         uid = data['uid']
         uid = del_user(uid)
-        data = {'command':'5','uid':uid}
+        data = {'command': '5', 'uid': uid}
         server_send_to(cip, c_con, data)
+
 
 def data_recv(c_con, cip):  # 接受数据处理
     data = c_con.recv(1024)
@@ -249,7 +252,6 @@ def del_user(uid):  # 用户添加好友
     except:
         uid = False
     return uid
-
 
 
 def del_friend(uid, fid):  # 删除好友

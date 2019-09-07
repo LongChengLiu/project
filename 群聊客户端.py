@@ -287,6 +287,8 @@ def send_data(data_send):
             print('账号已注销!!')
             sleep(1)
             exit_process()
+    elif data['command'] =='6':
+        pass
 
 
 def data_processing(recv_data):
