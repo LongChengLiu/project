@@ -170,7 +170,6 @@ def server_dispose(data, cip, c_con):
             if pwd == data['pwd']:
                 pwd = True
                 change_user_state(data['uid'], '1', data['uip'], c_con)
-
             else:
                 pwd = False
         send_data = {'command': '1', 'pwd': pwd}
@@ -264,7 +263,7 @@ def del_friend(uid, fid):  # 删除好友
     con.close()
 
 
-add_friend_show('long')
+# add_friend_show('long')
 # add_friend('8', '7', '123')
 # if __name__ == '__main__':
 #     main()
